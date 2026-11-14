@@ -1,0 +1,26 @@
+# Dependencias y build
+node_modules/
+dist/
+
+# Secretos y configuración local (NUNCA versionar)
+.env
+.env.*
+!.env.example
+*.local
+
+# Herramientas
+.wrangler/
+supabase/.temp/
+supabase/.branches/
+
+# Backups y dumps locales
+backups/
+*.sql.gz
+*.age
+*.dump
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json

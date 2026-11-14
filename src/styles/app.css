@@ -1,0 +1,9 @@
+/*
+  Ajustes posteriores a V15. Se cargan DESPUÉS de v15.css.
+  Mantener mínimos y sin alterar el diseño aprobado.
+*/
+
+/* Login real (usuario + contraseña) reutilizando los estilos de .login de V15 */
+.login form{display:flex;flex-direction:column;align-items:stretch;margin-top:12px}
+.login-error{color:#ff9c9c;font-size:13px;margin:12px 0 0}
+.login .btn:disabled{opacity:.6;cursor:wait}

@@ -1,0 +1,32 @@
+name: Migraciones de base de datos
+
+# develop -> staging ; main -> producción
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'supabase/migrations/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-migrate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Aplicar migraciones
+        env:
+          DB_URL: ${{ github.ref == 'refs/heads/main' && secrets.PROD_SUPABASE_DB_URL || secrets.STAGING_SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then echo "::error::Falta el secret *_SUPABASE_DB_URL"; exit 1; fi
+          supabase db push --db-url "$DB_URL" --include-all

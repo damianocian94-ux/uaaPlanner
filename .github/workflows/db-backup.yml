@@ -1,0 +1,66 @@
+name: Backup diario de la base
+
+# pg_dump (vía Supabase CLI) de producción, cifrado con age y subido a Cloudflare R2.
+# La retención (30 días) se configura con una regla de ciclo de vida en el bucket de R2.
+on:
+  schedule:
+    - cron: '0 6 * * *' # 03:00 hora Argentina
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Usar la cadena del "Session pooler" (IPv4). La conexión directa de Supabase es IPv6
+      # y los runners de GitHub no la soportan.
+      DB_URL: ${{ secrets.PROD_SUPABASE_DB_URL }}
+      AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_PUBLIC_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      R2_BUCKET: ${{ secrets.R2_BACKUP_BUCKET }}
+    steps:
+      - name: Verificar secrets
+        run: |
+          for v in DB_URL AGE_RECIPIENT AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY R2_BUCKET; do
+            if [ -z "${!v}" ]; then echo "::error::Falta el secret para $v"; exit 1; fi
+          done
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Instalar age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+
+      - name: Dump (roles, esquema y datos)
+        run: |
+          mkdir -p backup
+          supabase db dump --db-url "$DB_URL" -f backup/roles.sql --role-only
+          supabase db dump --db-url "$DB_URL" -f backup/schema.sql
+          supabase db dump --db-url "$DB_URL" -f backup/data.sql --use-copy --data-only
+          ls -la backup
+
+      - name: Comprimir y cifrar
+        run: |
+          STAMP=$(date -u +%Y-%m-%dT%H%M%SZ)
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          tar -czf "uaa-planner-$STAMP.tar.gz" -C backup .
+          age -r "$AGE_RECIPIENT" -o "uaa-planner-$STAMP.tar.gz.age" "uaa-planner-$STAMP.tar.gz"
+          rm -rf backup "uaa-planner-$STAMP.tar.gz"
+          ls -la *.age
+
+      - name: Subir a R2
+        run: |
+          aws s3 cp "uaa-planner-$STAMP.tar.gz.age" "s3://$R2_BUCKET/daily/uaa-planner-$STAMP.tar.gz.age" \
+            --endpoint-url "$R2_ENDPOINT" --only-show-errors
+          echo "Backup subido: daily/uaa-planner-$STAMP.tar.gz.age"
