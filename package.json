@@ -1,0 +1,27 @@
+{
+  "name": "uaa-planner",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "UAA Planner - planificación de contenidos del equipo de Comunicación y Marketing de UAA",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "users:create": "node --env-file=.env.local --import tsx scripts/create-users.ts",
+    "users:reset": "node --env-file=.env.local --import tsx scripts/create-users.ts --reset"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.0.0"
+  }
+}
