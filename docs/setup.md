@@ -24,7 +24,7 @@ npm run dev          # http://localhost:5173
    - **Confirm email: OFF** (los emails internos no existen).
 3. **Project Settings → API:** copiar la URL y la anon/publishable key a `.env.local`. La service_role/secret key va **solo** en `.env.local`, para el script de usuarios.
 4. Aplicar migraciones, una de estas dos formas:
-   - CLI: `supabase link --project-ref <ref>` y después `supabase db push`.
+   - CLI: completar `SUPABASE_DB_URL` en `.env.local` y correr `npm run db:push -- --dry-run`, después `npm run db:push`.
    - Workflow `db-migrate.yml` (push a `develop` o `main`).
 5. Crear los usuarios: `npm run users:create`. Las contraseñas temporales se muestran una sola vez y hay que entregarlas en privado.
    - Para regenerar una contraseña: `npm run users:reset -- erika`.

@@ -37,7 +37,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.1.0
 
       - name: Instalar age
         run: sudo apt-get update -qq && sudo apt-get install -y -qq age
@@ -45,9 +45,9 @@ jobs:
       - name: Dump (roles, esquema y datos)
         run: |
           mkdir -p backup
-          supabase db dump --db-url "$DB_URL" -f backup/roles.sql --role-only
-          supabase db dump --db-url "$DB_URL" -f backup/schema.sql
-          supabase db dump --db-url "$DB_URL" -f backup/data.sql --use-copy --data-only
+          supabase db dump --remote="$DB_URL" -f backup/roles.sql --role-only
+          supabase db dump --remote="$DB_URL" -f backup/schema.sql
+          supabase db dump --remote="$DB_URL" -f backup/data.sql --use-copy --data-only
           ls -la backup
 
       - name: Comprimir y cifrar
